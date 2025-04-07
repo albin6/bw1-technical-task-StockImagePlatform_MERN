@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import express, { Request, Response } from "express";
 import { connectDB } from "./config/db";
+import { errorHandler } from "middlewares/error-handler.middleware";
 
 dotenv.config();
 
@@ -18,6 +19,8 @@ app.use(
 app.use("/", (req: Request, res: Response) => {
   res.json("Application is running!!!");
 });
+
+app.use(errorHandler);
 
 connectDB();
 const PORT = process.env.PORT;
