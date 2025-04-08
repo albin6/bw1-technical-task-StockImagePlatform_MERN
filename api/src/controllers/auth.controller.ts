@@ -13,6 +13,7 @@ import {
 } from "utils/jwt";
 import { CustomJwtPayload } from "../types/auth";
 import { setCookies } from "utils/set-cookie";
+import { CustomRequest } from "middlewares/auth.middleware";
 
 // user registration
 export const register = async (req: Request, res: Response) => {
@@ -163,4 +164,65 @@ export const refreshToken = async (req: Request, res: Response) => {
       );
     }
   }
+};
+
+// current password check
+export const verifyCurrentPassword = async (req: Request, res: Response) => {
+  const { password } = req.body;
+
+  const userId = (req as CustomRequest).user.id;
+
+  if (!userId) {
+    throw new AppError(Messages.USER_ID_NOT_PROVIDED, StatusCode.BAD_REQUEST);
+  }
+
+  const user = await UserModel.findById(userId);
+
+  if (!user) {
+    throw new AppError(Messages.USER_NOT_FOUND, StatusCode.NOT_FOUND);
+  }
+
+  const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordMatch) {
+    throw new AppError(Messages.WRONG_PASSWORD, StatusCode.BAD_REQUEST);
+  }
+
+  res.status(StatusCode.OK).json({
+    success: true,
+  });
+};
+
+// set new password
+export const resetPassword = async (req: Request, res: Response) => {
+  const { newPassword } = req.body;
+
+  const userId = (req as CustomRequest).user.id;
+
+  if (!userId) {
+    throw new AppError(Messages.USER_ID_NOT_PROVIDED, StatusCode.BAD_REQUEST);
+  }
+
+  const user = await UserModel.findById(userId);
+
+  if (!user) {
+    throw new AppError(Messages.USER_NOT_FOUND, StatusCode.NOT_FOUND);
+  }
+
+  const isPasswordMatch = await bcrypt.compare(newPassword, user.password);
+
+  if (!isPasswordMatch) {
+    throw new AppError(Messages.SET_DIFF_PASSWORD, StatusCode.BAD_REQUEST);
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  user.password = hashedPassword;
+
+  await user.save();
+
+  res.status(StatusCode.OK).json({
+    success: true,
+    message: Messages.PASSWORD_UPDATE_SUCCESS,
+  });
 };
