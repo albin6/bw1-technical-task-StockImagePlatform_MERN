@@ -1,0 +1,32 @@
+import { Messages } from "constants/messages";
+import { StatusCode } from "constants/status-codes";
+import { Request, Response, NextFunction } from "express";
+import { verifyAccessToken } from "utils/jwt";
+
+export interface CustomRequest extends Request {
+  user: {
+    id: string;
+    email: string;
+  };
+}
+
+export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = req.cookies.access_token;
+
+    if (!token) {
+      return res
+        .status(StatusCode.UNAUTHORIZED)
+        .json({ message: Messages.TOKEN_MISSING });
+    }
+
+    const decoded = verifyAccessToken(token);
+
+    (req as CustomRequest).user = decoded;
+    next();
+  } catch (error) {
+    return res
+      .status(StatusCode.UNAUTHORIZED)
+      .json({ message: Messages.TOKEN_EXPIRED });
+  }
+};

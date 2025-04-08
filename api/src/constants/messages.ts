@@ -1,10 +1,17 @@
 export const Messages = {
   USER_CREATED: "User created successfully",
   USER_NOT_FOUND: "User not found",
+  EMAIL_EXISTS: "Email Exists",
   UNAUTHORIZED: "Unauthorized access",
   SERVER_ERROR: "Internal server error",
   INVALID_CREDENTIALS: "Invalid email or password",
   VALIDATION_ERROR: "Validation failed",
   LOGIN_SUCCESS: "Login successful",
   LOGOUT_SUCCESS: "Logout successful",
+  TOKEN_MISSING: "Access token missing",
+  TOKEN_EXPIRED: "Invalid or expired token",
+  TOKEN_INVALID_REUSED: "Invalid or reused token",
+  TOKEN_VALID: "Token is valid",
+  TOKEN_INVALID: "Token is invalid",
+  REFRESH_TOKEN_INVALID: "Refresh token is invalid",
 } as const;

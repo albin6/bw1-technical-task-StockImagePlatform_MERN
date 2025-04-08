@@ -1,9 +1,6 @@
-export interface JwtPayload {
-  id: string;
-  role?: "user" | "admin";
-}
+import { JwtPayload as DefaultJwtPayload } from "jsonwebtoken";
 
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken?: string;
+export interface CustomJwtPayload extends DefaultJwtPayload {
+  id: string;
+  email: string;
 }
