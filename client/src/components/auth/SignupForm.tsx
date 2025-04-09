@@ -2,10 +2,11 @@ import React from "react";
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import { LockOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { signup } from "@/api/auth.service";
 
 const { Title, Text } = Typography;
 
-interface SignupFormValues {
+export interface SignupFormValues {
   email: string;
   phone: string;
   password: string;
@@ -24,10 +25,10 @@ export default function SignupForm() {
       console.log("Signup form values:", values);
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await signup(values);
 
       message.success("Account created successfully!");
-      navigate("/login"); // Redirect to login after signup
+      navigate("/dashboard"); // Redirect to login after signup
     } catch (error) {
       message.error("Signup failed. Please try again.");
       console.error("Signup error:", error);

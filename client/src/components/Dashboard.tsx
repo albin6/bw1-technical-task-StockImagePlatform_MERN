@@ -5,6 +5,9 @@ import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
 import { MainContent } from "../components/MainContent";
 import { imageService, ImageData } from "../api/image-service";
+import { logout } from "@/api/auth.service";
+import { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface UserData {
   email: string;
@@ -18,6 +21,7 @@ export default function Dashboard() {
     phone: "+1234567890",
   });
 
+  const navigate = useNavigate();
   // State for password reset modal
   const [resetPasswordVisible, setResetPasswordVisible] = useState(false);
   const [resetPasswordStep, setResetPasswordStep] = useState(1);
@@ -49,6 +53,17 @@ export default function Dashboard() {
 
     fetchImages();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      message.success("Logout Success");
+      navigate("/");
+    } catch (error) {
+      if (error instanceof AxiosError) {
+      }
+    }
+  };
 
   // Password reset handlers
   const showResetPasswordModal = () => {
@@ -134,7 +149,7 @@ export default function Dashboard() {
     <Layout style={{ minHeight: "100vh" }}>
       {/* Sidebar Component */}
       <Sidebar
-        logout={() => {}}
+        logout={handleLogout}
         userData={userData}
         showResetPasswordModal={showResetPasswordModal}
       />

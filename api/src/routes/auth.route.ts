@@ -3,6 +3,7 @@ import asyncHandler from "express-async-handler";
 
 import {
   login,
+  logout,
   refreshToken,
   register,
   resetPassword,
@@ -16,6 +17,7 @@ import {
 } from "../validators/user.validator";
 import { validate } from "../middlewares/validate.middlerware";
 import { userDetails } from "../controllers/user.controller";
+import { verifyAuth } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -37,6 +39,8 @@ router.patch(
   asyncHandler(resetPassword)
 );
 
-router.get("/details", asyncHandler(userDetails));
+router.post("/logout", verifyAuth, asyncHandler(logout));
+
+router.get("/details", verifyAuth, asyncHandler(userDetails));
 
 export default router;

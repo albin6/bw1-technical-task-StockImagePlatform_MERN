@@ -226,3 +226,12 @@ export const resetPassword = async (req: Request, res: Response) => {
     message: Messages.PASSWORD_UPDATE_SUCCESS,
   });
 };
+
+export const logout = async (req: Request, res: Response) => {
+  res.clearCookie("access_token");
+  res.clearCookie("refresh_token");
+
+  res
+    .status(StatusCode.OK)
+    .json({ success: true, message: Messages.LOGOUT_SUCCESS });
+};
