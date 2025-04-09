@@ -15,6 +15,7 @@ import {
   verifyCurrentPasswordSchema,
 } from "validators/user.validator";
 import { validate } from "middlewares/validate.middlerware";
+import { userDetails } from "controllers/user.controller";
 
 const router = Router();
 
@@ -35,5 +36,7 @@ router.patch(
   validate(resetPasswordSchema),
   asyncHandler(resetPassword)
 );
+
+router.get("/details", asyncHandler(userDetails));
 
 export default router;

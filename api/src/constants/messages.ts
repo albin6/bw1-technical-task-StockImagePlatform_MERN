@@ -1,5 +1,6 @@
 export const Messages = {
   USER_CREATED: "User created successfully",
+  REQUIRED_DATA: "Required data not provided",
   USER_NOT_FOUND: "User not found",
   USER_ID_NOT_PROVIDED: "User ID not provided",
   EMAIL_EXISTS: "Email Exists",
@@ -18,4 +19,10 @@ export const Messages = {
   TOKEN_VALID: "Token is valid",
   TOKEN_INVALID: "Token is invalid",
   REFRESH_TOKEN_INVALID: "Refresh token is invalid",
+  IMAGE_UPLOAD_SUCCESS: "Images uploaded successfully",
+  IMAGE_NOT_FOUND: "Image not found",
+  IMAGE_DELETED: "Image deleted successfully",
+  IMAGE_ORDER_WRONG: "imageOrder must be an array",
+  IMAGE_ORDER_UPDATED: "Image order updated successfully",
+  IMAGE_UPDATED: "Image updated successfully",
 } as const;

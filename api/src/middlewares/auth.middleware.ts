@@ -15,9 +15,10 @@ export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies.access_token;
 
     if (!token) {
-      return res
+      res
         .status(StatusCode.UNAUTHORIZED)
         .json({ message: Messages.TOKEN_MISSING });
+      return;
     }
 
     const decoded = verifyAccessToken(token);
@@ -25,7 +26,7 @@ export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
     (req as CustomRequest).user = decoded;
     next();
   } catch (error) {
-    return res
+    res
       .status(StatusCode.UNAUTHORIZED)
       .json({ message: Messages.TOKEN_EXPIRED });
   }
