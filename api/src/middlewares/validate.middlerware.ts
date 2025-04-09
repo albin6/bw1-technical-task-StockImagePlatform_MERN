@@ -1,4 +1,4 @@
-import { StatusCode } from "constants/status-codes";
+import { StatusCode } from "../constants/status-codes";
 import { Request, Response, NextFunction } from "express";
 import { ZodSchema } from "zod";
 

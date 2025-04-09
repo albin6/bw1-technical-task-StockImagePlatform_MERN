@@ -1,9 +1,9 @@
-import { Messages } from "constants/messages";
-import { StatusCode } from "constants/status-codes";
+import { Messages } from "../constants/messages";
+import { StatusCode } from "../constants/status-codes";
 import { Request, Response } from "express";
-import { CustomRequest } from "middlewares/auth.middleware";
-import { UserModel } from "models/user.model";
-import { AppError } from "utils/app-error";
+import { CustomRequest } from "../middlewares/auth.middleware";
+import { UserModel } from "../models/user.model";
+import { AppError } from "../utils/app-error";
 
 export const userDetails = async (req: Request, res: Response) => {
   const userId = (req as CustomRequest).user.id;

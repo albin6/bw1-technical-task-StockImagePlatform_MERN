@@ -4,7 +4,7 @@ import path from "path";
 import express, { Request, Response } from "express";
 
 import { connectDB } from "./config/db";
-import { errorHandler } from "middlewares/error-handler.middleware";
+import { errorHandler } from "./middlewares/error-handler.middleware";
 import authRoutes from "./routes/auth.route";
 import imageRoutes from "./routes/image.route";
 

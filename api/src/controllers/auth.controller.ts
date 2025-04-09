@@ -1,19 +1,19 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 
-import { Messages } from "constants/messages";
-import { StatusCode } from "constants/status-codes";
-import { UserModel } from "models/user.model";
-import { AppError } from "utils/app-error";
+import { Messages } from "../constants/messages";
+import { StatusCode } from "../constants/status-codes";
+import { UserModel } from "../models/user.model";
+import { AppError } from "../utils/app-error";
 import {
   createAccessToken,
   createRefreshToken,
   verifyAccessToken,
   verifyRefreshToken,
-} from "utils/jwt";
+} from "../utils/jwt";
 import { CustomJwtPayload } from "../types/auth";
-import { setCookies } from "utils/set-cookie";
-import { CustomRequest } from "middlewares/auth.middleware";
+import { setCookies } from "../utils/set-cookie";
+import { CustomRequest } from "../middlewares/auth.middleware";
 
 // user registration
 export const register = async (req: Request, res: Response) => {

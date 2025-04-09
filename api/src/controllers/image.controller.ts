@@ -2,11 +2,11 @@ import fs from "fs";
 import { Request, Response } from "express";
 
 import { ImageDocument } from "../types/index";
-import { Messages } from "constants/messages";
-import { StatusCode } from "constants/status-codes";
-import { CustomRequest } from "middlewares/auth.middleware";
-import { ImageModel } from "models/image.model";
-import { AppError } from "utils/app-error";
+import { Messages } from "../constants/messages";
+import { StatusCode } from "../constants/status-codes";
+import { CustomRequest } from "../middlewares/auth.middleware";
+import { ImageModel } from "../models/image.model";
+import { AppError } from "../utils/app-error";
 
 export const uploadImages = async (req: Request, res: Response) => {
   const files = req.files as Express.Multer.File[];

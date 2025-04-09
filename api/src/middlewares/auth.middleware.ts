@@ -1,7 +1,7 @@
-import { Messages } from "constants/messages";
-import { StatusCode } from "constants/status-codes";
+import { Messages } from "../constants/messages";
+import { StatusCode } from "../constants/status-codes";
 import { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "utils/jwt";
+import { verifyAccessToken } from "../utils/jwt";
 
 export interface CustomRequest extends Request {
   user: {

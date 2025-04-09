@@ -7,15 +7,15 @@ import {
   register,
   resetPassword,
   verifyCurrentPassword,
-} from "controllers/auth.controller";
+} from "../controllers/auth.controller";
 import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
   verifyCurrentPasswordSchema,
-} from "validators/user.validator";
-import { validate } from "middlewares/validate.middlerware";
-import { userDetails } from "controllers/user.controller";
+} from "../validators/user.validator";
+import { validate } from "../middlewares/validate.middlerware";
+import { userDetails } from "../controllers/user.controller";
 
 const router = Router();
 
