@@ -8,6 +8,7 @@ import { imageService, ImageData } from "../api/image-service";
 import { logout } from "@/api/auth.service";
 import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface UserData {
   email: string;
@@ -38,13 +39,17 @@ export default function Dashboard() {
 
   // Fetch images on component mount
   useEffect(() => {
+    if (!localStorage.getItem("user")) {
+      navigate("/");
+      return;
+    }
     const fetchImages = async () => {
       try {
         setLoading(true);
         const data = await imageService.getImages();
         setImages(data);
       } catch (error) {
-        message.error("Failed to fetch images");
+        toast.error("Failed to fetch images");
         console.error(error);
       } finally {
         setLoading(false);
@@ -57,7 +62,8 @@ export default function Dashboard() {
   const handleLogout = async () => {
     try {
       await logout();
-      message.success("Logout Success");
+      localStorage.removeItem("user");
+      toast.success("Logout Success");
       navigate("/");
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -86,7 +92,7 @@ export default function Dashboard() {
       // Move to next step if password is correct
       setResetPasswordStep(2);
     } catch (error) {
-      message.error("Failed to verify password");
+      toast.error("Failed to verify password");
     } finally {
       setResetLoading(false);
     }
@@ -98,10 +104,10 @@ export default function Dashboard() {
       // Simulate API call to update password
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      message.success("Password updated successfully");
+      toast.success("Password updated successfully");
       setResetPasswordVisible(false);
     } catch (error) {
-      message.error("Failed to update password");
+      toast.error("Failed to update password");
     } finally {
       setResetLoading(false);
     }
@@ -134,11 +140,11 @@ export default function Dashboard() {
       );
 
       setImages(updatedImages);
-      message.success("Image updated successfully");
+      toast.success("Image updated successfully");
       setEditImageVisible(false);
       setCurrentImage(null);
     } catch (error) {
-      message.error("Failed to update image");
+      toast.error("Failed to update image");
       console.error(error);
     } finally {
       setLoading(false);

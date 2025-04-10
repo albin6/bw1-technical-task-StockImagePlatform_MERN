@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import { LockOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { signup } from "@/api/auth.service";
+import { toast } from "sonner";
 
 const { Title, Text } = Typography;
 
@@ -18,6 +19,13 @@ export default function SignupForm() {
   const [form] = Form.useForm();
   const [loading, setLoading] = React.useState(false);
 
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, []);
+
   const onFinish = async (values: SignupFormValues) => {
     try {
       setLoading(true);
@@ -25,12 +33,14 @@ export default function SignupForm() {
       console.log("Signup form values:", values);
 
       // Simulate API call
-      await signup(values);
+      const data = await signup(values);
 
-      message.success("Account created successfully!");
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      toast.success("Account created successfully!");
       navigate("/dashboard"); // Redirect to login after signup
     } catch (error) {
-      message.error("Signup failed. Please try again.");
+      toast.error("Signup failed. Please try again.");
       console.error("Signup error:", error);
     } finally {
       setLoading(false);

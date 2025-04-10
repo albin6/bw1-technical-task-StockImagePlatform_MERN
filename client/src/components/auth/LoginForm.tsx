@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { login } from "@/api/auth.service";
+import { toast } from "sonner";
 
 const { Title, Text } = Typography;
 
@@ -16,6 +17,13 @@ export default function LoginForm() {
   const [form] = Form.useForm();
   const [loading, setLoading] = React.useState(false);
 
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, []);
+
   const onFinish = async (values: LoginFormValues) => {
     try {
       setLoading(true);
@@ -25,10 +33,12 @@ export default function LoginForm() {
       // Simulate API call
       const data = await login(values);
 
-      message.success("Login successful!");
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      toast.success("Login successful!");
       navigate("/dashboard");
     } catch (error) {
-      message.error("Login failed. Please try again.");
+      toast.error("Login failed. Please try again.");
       console.error("Login error:", error);
     } finally {
       setLoading(false);
