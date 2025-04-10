@@ -64,6 +64,6 @@ export const imageService = {
   updateImageOrder: async (
     images: { _id: string; order: number }[]
   ): Promise<void> => {
-    await axiosInstance.put("/img/rearrange", { images });
+    await axiosInstance.put("/img/rearrange", { imageOrder: images });
   },
 };

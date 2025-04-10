@@ -16,7 +16,14 @@ import {
   EditOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { UploadFile, UploadProps } from "antd/es/upload/interface";
 import type { RcFile } from "antd/es/upload";
 import { imageService, ImageData } from "../api/image-service";
@@ -33,6 +40,67 @@ interface MainContentProps {
   loading: boolean;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
+// Sortable Image Item Component
+const SortableImage = ({
+  image,
+  showEditImageModal,
+  handleDeleteImage,
+}: {
+  image: ImageData;
+  showEditImageModal: (image: ImageData) => void;
+  handleDeleteImage: (id: string) => void;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({
+      id: image._id,
+    });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: transform ? 1 : 0, // Lift the dragged item
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <Card
+        hoverable
+        cover={
+          <div style={{ height: 200, overflow: "hidden" }}>
+            <img
+              alt={image.title}
+              src={
+                `${import.meta.env.VITE_API_URL}${image.imageURL}` ||
+                "/placeholder.svg"
+              }
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </div>
+        }
+        actions={[
+          <EditOutlined key="edit" onClick={() => showEditImageModal(image)} />,
+          <Popconfirm
+            key={`popconfirm-${image._id}`}
+            title="Delete this image?"
+            description="Are you sure you want to delete this image?"
+            onConfirm={() => handleDeleteImage(image._id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <DeleteOutlined key="delete" />
+          </Popconfirm>,
+        ]}
+      >
+        <Card.Meta title={image.title} />
+      </Card>
+    </div>
+  );
+};
 
 export const MainContent = ({
   images,
@@ -51,7 +119,6 @@ export const MainContent = ({
       return;
     }
 
-    // Check if all files have titles
     const missingTitles = fileList.filter((file) => !uploadTitles[file.uid]);
     if (missingTitles.length > 0) {
       toast.error("Please provide titles for all images");
@@ -61,10 +128,6 @@ export const MainContent = ({
     setUploading(true);
 
     try {
-      // Log the fileList to see what we're working with
-      console.log("FileList before extraction:", fileList);
-
-      // Extract the File objects, with better error handling
       const files: File[] = [];
       for (const file of fileList) {
         if (!file.originFileObj) {
@@ -78,14 +141,10 @@ export const MainContent = ({
         files.push(file.originFileObj);
       }
 
-      // Prepare titles in the format needed by the backend
       const titlesRecord: Record<string, string> = {};
       fileList.forEach((file, index) => {
         titlesRecord[index.toString()] = uploadTitles[file.uid];
       });
-
-      console.log("Files prepared for upload:", files);
-      console.log("Titles prepared for upload:", titlesRecord);
 
       await imageService.uploadImages(files, titlesRecord);
 
@@ -93,7 +152,6 @@ export const MainContent = ({
       setFileList([]);
       setUploadTitles({});
 
-      // Refresh the images list
       setLoading(true);
       const updatedImages = await imageService.getImages();
       setImages(updatedImages);
@@ -107,14 +165,12 @@ export const MainContent = ({
   };
 
   const beforeUpload = (file: RcFile) => {
-    // Check if file is an image
     const isImage = file.type.startsWith("image/");
     if (!isImage) {
       message.error(`${file.name} is not an image file`);
       return Upload.LIST_IGNORE;
     }
 
-    // Create a proper UploadFile object with originFileObj set
     const uploadFile: UploadFile = {
       uid: file.uid,
       name: file.name,
@@ -125,10 +181,7 @@ export const MainContent = ({
       originFileObj: file,
     };
 
-    // Add file to fileList
     setFileList((prev) => [...prev, uploadFile]);
-
-    // Return false to prevent auto upload
     return false;
   };
 
@@ -137,7 +190,6 @@ export const MainContent = ({
       const newFileList = fileList.filter((item) => item.uid !== file.uid);
       setFileList(newFileList);
 
-      // Remove title for this file
       const newUploadTitles = { ...uploadTitles };
       delete newUploadTitles[file.uid];
       setUploadTitles(newUploadTitles);
@@ -149,7 +201,6 @@ export const MainContent = ({
     accept: "image/*",
   };
 
-  // Handle title input for each file
   const handleTitleChange = (uid: string, title: string) => {
     setUploadTitles((prev) => ({
       ...prev,
@@ -157,13 +208,11 @@ export const MainContent = ({
     }));
   };
 
-  // Image delete handler
   const handleDeleteImage = async (id: string) => {
     try {
       setLoading(true);
       await imageService.deleteImage(id);
 
-      // Update local state after deletion
       const updatedImages = images.filter((img) => img._id !== id);
       setImages(updatedImages);
       message.success("Image deleted successfully");
@@ -175,32 +224,39 @@ export const MainContent = ({
     }
   };
 
-  // Drag and drop handler
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
 
-    const items = Array.from(images);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    if (!over || active.id === over.id) return;
 
-    // Update order property
-    const updatedItems = items.map((item, index) => ({
+    const oldIndex = images.findIndex((img) => img._id === active.id);
+    const newIndex = images.findIndex((img) => img._id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      console.error("Invalid drag indices:", { oldIndex, newIndex });
+      return;
+    }
+
+    // Reorder the images array
+    const newImages = arrayMove(images, oldIndex, newIndex);
+
+    // Update the order property
+    const updatedImages = newImages.map((item, index) => ({
       ...item,
       order: index,
     }));
 
-    setImages(updatedItems);
+    setImages(updatedImages);
   };
 
   const saveImageOrder = async () => {
     try {
       setLoading(true);
-      // Prepare data for API request
       const imageOrder = images.map((img, index) => ({
         _id: img._id,
         order: index,
       }));
-
+      console.log("Sending imageOrder:", imageOrder);
       await imageService.updateImageOrder(imageOrder);
       message.success("Image order saved successfully");
     } catch (error) {
@@ -210,7 +266,6 @@ export const MainContent = ({
       setLoading(false);
     }
   };
-
   return (
     <Content
       style={{
@@ -220,7 +275,6 @@ export const MainContent = ({
         minHeight: 280,
       }}
     >
-      {/* Image Upload Section */}
       <Card title="Upload Images" style={{ marginBottom: 24 }}>
         <Dragger {...uploadProps} style={{ marginBottom: 16 }}>
           <p className="ant-upload-drag-icon">
@@ -234,7 +288,6 @@ export const MainContent = ({
           </p>
         </Dragger>
 
-        {/* Title inputs for each file */}
         {fileList.length > 0 && (
           <div style={{ marginTop: 16, marginBottom: 16 }}>
             <Title level={5}>Image Titles</Title>
@@ -272,7 +325,6 @@ export const MainContent = ({
         </Button>
       </Card>
 
-      {/* Image Gallery Section */}
       <Card
         title="My Images"
         extra={
@@ -293,83 +345,33 @@ export const MainContent = ({
             <p>No images uploaded yet</p>
           </div>
         ) : (
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="images" direction="horizontal">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fill, minmax(250px, 1fr))",
-                    gap: "16px",
-                    minHeight: "50px",
-                  }}
-                >
-                  {images.length > 0 &&
-                    Array.isArray(images) &&
-                    images.map((image, index) => (
-                      <Draggable
-                        key={image._id}
-                        draggableId={image._id}
-                        index={index}
-                      >
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <Card
-                              hoverable
-                              cover={
-                                <div
-                                  style={{ height: 200, overflow: "hidden" }}
-                                >
-                                  <img
-                                    alt={image.title}
-                                    src={
-                                      `${import.meta.env.VITE_API_URL}${
-                                        image.imageURL
-                                      }` || "/placeholder.svg"
-                                    }
-                                    style={{
-                                      width: "100%",
-                                      height: "100%",
-                                      objectFit: "cover",
-                                    }}
-                                  />
-                                </div>
-                              }
-                              actions={[
-                                <EditOutlined
-                                  key="edit"
-                                  onClick={() => showEditImageModal(image)}
-                                />,
-                                <Popconfirm
-                                  key={`popconfirm-${image._id}`}
-                                  title="Delete this image?"
-                                  description="Are you sure you want to delete this image?"
-                                  onConfirm={() => handleDeleteImage(image._id)}
-                                  okText="Yes"
-                                  cancelText="No"
-                                >
-                                  <DeleteOutlined key="delete" />
-                                </Popconfirm>,
-                              ]}
-                            >
-                              <Card.Meta title={image.title} />
-                            </Card>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={images.map((image) => image._id)}
+              strategy={verticalListSortingStrategy} // Adjust strategy if needed
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+                  gap: "16px",
+                  minHeight: "50px",
+                }}
+              >
+                {images.map((image) => (
+                  <SortableImage
+                    key={image._id}
+                    image={image}
+                    showEditImageModal={showEditImageModal}
+                    handleDeleteImage={handleDeleteImage}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </Card>
     </Content>

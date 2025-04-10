@@ -26,7 +26,7 @@ export const uploadImages = async (req: Request, res: Response) => {
   const imagesToInsert: Partial<ImageDocument>[] = files.map((file, index) => ({
     title: titleArray[index],
     imageURL: `/uploads/${file.filename}`, // or use cloud URL
-    userId,
+    userId: userId as any,
     order: index,
   }));
 
@@ -48,7 +48,7 @@ export const getImages = async (req: Request, res: Response) => {
     throw new AppError(Messages.USER_ID_NOT_PROVIDED, StatusCode.BAD_REQUEST);
   }
 
-  const images = await ImageModel.find({ userId });
+  const images = await ImageModel.find({ userId }).sort({ order: 1 });
 
   res.status(StatusCode.CREATED).json({ success: true, images });
 };
@@ -95,16 +95,32 @@ export const deleteImage = async (req: Request, res: Response) => {
   res.json({ success: true, message: Messages.IMAGE_DELETED });
 };
 
-export const rearrangeImages = async (req: Request, res: Response) => {
-  const { imageOrder } = req.body as { imageOrder: string[] };
+interface ImageOrderItem {
+  _id: any;
+  order: number;
+}
 
-  if (!Array.isArray(imageOrder)) {
+export const rearrangeImages = async (req: Request, res: Response) => {
+  const { imageOrder } = req.body as { imageOrder: ImageOrderItem[] };
+
+  // Log the incoming data for debugging
+  console.log("Received imageOrder:", imageOrder);
+
+  // Validate that imageOrder is an array and contains valid objects
+  if (
+    !Array.isArray(imageOrder) ||
+    !imageOrder.every((item) => "_id" in item && "order" in item)
+  ) {
     throw new AppError(Messages.IMAGE_ORDER_WRONG, StatusCode.BAD_REQUEST);
   }
 
   await Promise.all(
-    imageOrder.map((imageId, index) =>
-      ImageModel.findByIdAndUpdate(imageId, { order: index })
+    imageOrder.map(({ _id, order }: { _id: any; order: number }) =>
+      ImageModel.findByIdAndUpdate(
+        _id,
+        { order },
+        { new: true } // Return the updated document (optional)
+      )
     )
   );
 

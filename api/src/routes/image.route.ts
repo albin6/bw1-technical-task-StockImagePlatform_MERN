@@ -19,6 +19,7 @@ router.post(
   upload.array("images"),
   asyncHandler(uploadImages)
 );
+router.put("/rearrange", verifyAuth, asyncHandler(rearrangeImages));
 router.put(
   "/:id",
   verifyAuth,
@@ -26,6 +27,5 @@ router.put(
   asyncHandler(updateImage)
 );
 router.delete("/:id", verifyAuth, asyncHandler(deleteImage));
-router.put("/rearrange", verifyAuth, asyncHandler(rearrangeImages));
 
 export default router;

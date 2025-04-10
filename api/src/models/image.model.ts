@@ -4,7 +4,7 @@ import { model, Schema } from "mongoose";
 export const imageSchema = new Schema<ImageDocument>({
   title: { type: String, required: true },
   imageURL: { type: String, required: true },
-  userId: { type: String, required: true },
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   order: { type: Number, required: true },
   createdAt: { type: Date, default: Date.now },
 });
