@@ -304,6 +304,7 @@ export const MainContent = ({
                     gridTemplateColumns:
                       "repeat(auto-fill, minmax(250px, 1fr))",
                     gap: "16px",
+                    minHeight: "50px",
                   }}
                 >
                   {images.length > 0 &&
