@@ -14,11 +14,14 @@ export const uploadImages = async (req: Request, res: Response) => {
 
   const userId = (req as CustomRequest).user.id;
 
+  console.log("user id", userId);
+
   if (!files || !titles || !userId) {
     throw new AppError(Messages.REQUIRED_DATA, StatusCode.BAD_REQUEST);
   }
 
-  const titleArray: string[] = Array.isArray(titles) ? titles : [titles];
+  // const titleArray: string[] = Array.isArray(titles) ? titles : [titles];
+  const titleArray: string[] = titles;
 
   const imagesToInsert: Partial<ImageDocument>[] = files.map((file, index) => ({
     title: titleArray[index],
@@ -29,9 +32,25 @@ export const uploadImages = async (req: Request, res: Response) => {
 
   const savedImages = await ImageModel.insertMany(imagesToInsert);
 
+  console.log("saved images => ", savedImages);
+
   res
     .status(StatusCode.CREATED)
     .json({ success: true, message: Messages.IMAGE_UPLOAD_SUCCESS });
+};
+
+export const getImages = async (req: Request, res: Response) => {
+  const userId = (req as CustomRequest).user.id;
+
+  console.log("user id", userId);
+
+  if (!userId) {
+    throw new AppError(Messages.USER_ID_NOT_PROVIDED, StatusCode.BAD_REQUEST);
+  }
+
+  const images = await ImageModel.find({ userId });
+
+  res.status(StatusCode.CREATED).json({ success: true, images });
 };
 
 export const updateImage = async (req: Request, res: Response) => {

@@ -20,6 +20,7 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import type { UploadFile, UploadProps } from "antd/es/upload/interface";
 import type { RcFile } from "antd/es/upload";
 import { imageService, ImageData } from "../api/image-service";
+import { toast } from "sonner";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -44,36 +45,47 @@ export const MainContent = ({
   const [uploading, setUploading] = useState(false);
   const [uploadTitles, setUploadTitles] = useState<Record<string, string>>({});
 
-  // Image upload handlers
   const handleUpload = async () => {
     if (fileList.length === 0) {
-      message.error("Please select at least one file to upload");
+      toast.error("Please select at least one file to upload");
       return;
     }
 
     // Check if all files have titles
     const missingTitles = fileList.filter((file) => !uploadTitles[file.uid]);
     if (missingTitles.length > 0) {
-      message.error("Please provide titles for all images");
+      toast.error("Please provide titles for all images");
       return;
     }
 
     setUploading(true);
 
     try {
-      const files = fileList.map((file) => file.originFileObj as File);
+      // Log the fileList to see what we're working with
+      console.log("FileList before extraction:", fileList);
+
+      // Extract the File objects, with better error handling
+      const files: File[] = [];
+      for (const file of fileList) {
+        if (!file.originFileObj) {
+          console.error(`Missing originFileObj for file: ${file.name}`);
+          toast.error(
+            `Problem with file: ${file.name}. Please try uploading again.`
+          );
+          setUploading(false);
+          return;
+        }
+        files.push(file.originFileObj);
+      }
 
       // Prepare titles in the format needed by the backend
-      const titleArray: string[] = [];
-      fileList.forEach((file) => {
-        titleArray.push(uploadTitles[file.uid]);
+      const titlesRecord: Record<string, string> = {};
+      fileList.forEach((file, index) => {
+        titlesRecord[index.toString()] = uploadTitles[file.uid];
       });
 
-      // Create a record of titles by index
-      const titlesRecord: Record<string, string> = {};
-      titleArray.forEach((title, index) => {
-        titlesRecord[index.toString()] = title;
-      });
+      console.log("Files prepared for upload:", files);
+      console.log("Titles prepared for upload:", titlesRecord);
 
       await imageService.uploadImages(files, titlesRecord);
 
@@ -94,6 +106,32 @@ export const MainContent = ({
     }
   };
 
+  const beforeUpload = (file: RcFile) => {
+    // Check if file is an image
+    const isImage = file.type.startsWith("image/");
+    if (!isImage) {
+      message.error(`${file.name} is not an image file`);
+      return Upload.LIST_IGNORE;
+    }
+
+    // Create a proper UploadFile object with originFileObj set
+    const uploadFile: UploadFile = {
+      uid: file.uid,
+      name: file.name,
+      status: "done",
+      size: file.size,
+      type: file.type,
+      percent: 100,
+      originFileObj: file,
+    };
+
+    // Add file to fileList
+    setFileList((prev) => [...prev, uploadFile]);
+
+    // Return false to prevent auto upload
+    return false;
+  };
+
   const uploadProps: UploadProps = {
     onRemove: (file) => {
       const newFileList = fileList.filter((item) => item.uid !== file.uid);
@@ -104,20 +142,7 @@ export const MainContent = ({
       delete newUploadTitles[file.uid];
       setUploadTitles(newUploadTitles);
     },
-    beforeUpload: (file: RcFile) => {
-      // Check if file is an image
-      const isImage = file.type.startsWith("image/");
-      if (!isImage) {
-        message.error(`${file.name} is not an image file`);
-        return Upload.LIST_IGNORE;
-      }
-
-      // Add file to fileList
-      setFileList((prev) => [...prev, file]);
-
-      // Return false to prevent auto upload
-      return false;
-    },
+    beforeUpload,
     fileList,
     multiple: true,
     listType: "picture",
@@ -303,7 +328,11 @@ export const MainContent = ({
                                 >
                                   <img
                                     alt={image.title}
-                                    src={image.url || "/placeholder.svg"}
+                                    src={
+                                      `${import.meta.env.VITE_API_URL}${
+                                        image.imageURL
+                                      }` || "/placeholder.svg"
+                                    }
                                     style={{
                                       width: "100%",
                                       height: "100%",

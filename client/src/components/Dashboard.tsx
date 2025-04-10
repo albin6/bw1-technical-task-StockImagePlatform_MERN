@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Layout, Modal, Form, Input, message, Button } from "antd";
+import { Layout, Modal, Form, Input, Button } from "antd";
 import { LockOutlined } from "@ant-design/icons";
 import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
 import { MainContent } from "../components/MainContent";
 import { imageService, ImageData } from "../api/image-service";
-import { logout } from "@/api/auth.service";
+import { logout, resetPassword, verifyCurrentPass } from "@/api/auth.service";
 import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -49,8 +49,7 @@ export default function Dashboard() {
         const data = await imageService.getImages();
         setImages(data);
       } catch (error) {
-        toast.error("Failed to fetch images");
-        console.error(error);
+        // error handling
       } finally {
         setLoading(false);
       }
@@ -67,6 +66,7 @@ export default function Dashboard() {
       navigate("/");
     } catch (error) {
       if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message);
       }
     }
   };
@@ -87,12 +87,14 @@ export default function Dashboard() {
     try {
       setResetLoading(true);
       // Simulate API call to verify current password
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await verifyCurrentPass(values.currentPassword);
 
       // Move to next step if password is correct
       setResetPasswordStep(2);
     } catch (error) {
-      toast.error("Failed to verify password");
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message);
+      }
     } finally {
       setResetLoading(false);
     }
@@ -102,12 +104,18 @@ export default function Dashboard() {
     try {
       setResetLoading(true);
       // Simulate API call to update password
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      toast.success("Password updated successfully");
+      const data = await resetPassword(
+        values.newPassword,
+        values.confirmNewPassword
+      );
+
+      toast.success(data.message);
       setResetPasswordVisible(false);
     } catch (error) {
-      toast.error("Failed to update password");
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message);
+      }
     } finally {
       setResetLoading(false);
     }
@@ -144,7 +152,9 @@ export default function Dashboard() {
       setEditImageVisible(false);
       setCurrentImage(null);
     } catch (error) {
-      toast.error("Failed to update image");
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message);
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -203,32 +213,6 @@ export default function Dashboard() {
                 placeholder="Enter your current password"
               />
             </Form.Item>
-            <Form.Item
-              name="confirmCurrentPassword"
-              label="Confirm Current Password"
-              dependencies={["currentPassword"]}
-              rules={[
-                {
-                  required: true,
-                  message: "Please confirm your current password",
-                },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue("currentPassword") === value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(
-                      new Error("The two passwords do not match")
-                    );
-                  },
-                }),
-              ]}
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="Confirm your current password"
-              />
-            </Form.Item>
             <Form.Item>
               <Button
                 type="primary"
@@ -265,6 +249,32 @@ export default function Dashboard() {
                 placeholder="Enter your new password"
               />
             </Form.Item>
+            <Form.Item
+              name="confirmNewPassword"
+              label="Confirm New Password"
+              dependencies={["newPassword"]}
+              rules={[
+                {
+                  required: true,
+                  message: "Please confirm your new password",
+                },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue("newPassword") === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(
+                      new Error("The two passwords do not match")
+                    );
+                  },
+                }),
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Confirm your new password"
+              />
+            </Form.Item>
             <Form.Item>
               <Button
                 type="primary"
@@ -294,7 +304,10 @@ export default function Dashboard() {
           >
             <div style={{ textAlign: "center", marginBottom: 16 }}>
               <img
-                src={currentImage.url || "/placeholder.svg"}
+                src={
+                  `${import.meta.env.VITE_API_URL}${currentImage.imageURL}` ||
+                  "/placeholder.svg"
+                }
                 alt={currentImage.title}
                 style={{ maxWidth: "100%", maxHeight: 200 }}
               />

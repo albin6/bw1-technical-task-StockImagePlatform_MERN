@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Form, Input, Button, Card, Typography, message } from "antd";
+import { Form, Input, Button, Card, Typography } from "antd";
 import { LockOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { signup } from "@/api/auth.service";
@@ -158,7 +158,7 @@ export default function SignupForm() {
         <div className="text-center mt-4">
           <Text type="secondary">
             Already have an account?{" "}
-            <a onClick={() => navigate("/login")}>Sign in</a>
+            <a onClick={() => navigate("/")}>Sign in</a>
           </Text>
         </div>
       </Card>

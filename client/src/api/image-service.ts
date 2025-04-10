@@ -2,16 +2,19 @@ import { axiosInstance } from "./axios.instance";
 
 export interface ImageData {
   _id: string;
-  title: string;
-  url: string;
+  title: string; // Looks like it might be a JSON string of an array
+  imageURL: string;
+  userId: string;
   order: number;
+  createdAt: string;
+  __v: number; // Mongoose version key
 }
 
 export const imageService = {
   // Get all images for the current user
   getImages: async (): Promise<ImageData[]> => {
-    const response = await axiosInstance.get("/images");
-    return response.data;
+    const response = await axiosInstance.get("/img");
+    return response.data.images;
   },
 
   // Upload multiple images with titles
@@ -21,13 +24,21 @@ export const imageService = {
   ): Promise<ImageData[]> => {
     const formData = new FormData();
 
-    // Add each file to the form data
+    console.log(files);
+
+    const titlesArray = Array.from({ length: files.length }, (_, index) => {
+      return titles[index.toString()] || `Untitled Image ${index + 1}`;
+    });
+
+    console.log("Titles array:", titlesArray);
+
+    // Add each file to the form data with a specific key for each file
     files.forEach((file, index) => {
-      formData.append("images", file);
+      formData.append(`images`, file); // This should match your backend field name
     });
 
     // Add titles as JSON
-    formData.append("titles", JSON.stringify(titles));
+    formData.append("titles", JSON.stringify(titlesArray));
 
     const response = await axiosInstance.post("/img/upload", formData, {
       headers: {

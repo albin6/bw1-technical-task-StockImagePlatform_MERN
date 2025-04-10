@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import {
   deleteImage,
+  getImages,
   rearrangeImages,
   updateImage,
   uploadImages,
@@ -11,6 +12,7 @@ import { verifyAuth } from "../middlewares/auth.middleware";
 
 const router = Router();
 
+router.get("/", verifyAuth, asyncHandler(getImages));
 router.post(
   "/upload",
   verifyAuth,

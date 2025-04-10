@@ -29,12 +29,14 @@ router.post("/refresh-token", asyncHandler(refreshToken));
 
 router.post(
   "/verify-current-password",
+  verifyAuth,
   validate(verifyCurrentPasswordSchema),
   asyncHandler(verifyCurrentPassword)
 );
 
 router.patch(
   "/reset-password",
+  verifyAuth,
   validate(resetPasswordSchema),
   asyncHandler(resetPassword)
 );
