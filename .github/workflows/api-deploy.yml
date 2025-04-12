@@ -1,0 +1,56 @@
+name: API Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - ".github/workflows/api-deploy.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USERNAME: ${{ secrets.EC2_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > key.pem
+          chmod 400 key.pem
+
+          ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USERNAME@$EC2_HOST << 'ENDSSH'
+            # Navigate to project directory or clone if it doesn't exist
+            if [ -d "~/api" ]; then
+              cd ~/api
+              git pull origin main
+            else
+              git clone https://github.com/albin6/bw1-technical-task-StockImagePlatform_MERN.git ~/api
+              cd ~/api
+            fi
+
+            cd api
+
+            # Install dependencies and build
+            npm ci
+            npm run build
+
+            # Create/update .env file
+            cat > .env << 'ENVFILE'
+            PORT=${{ secrets.PORT }}
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            CORS_ALLOWED_ORIGIN=${{ secrets.CORS_ALLOWED_ORIGIN }}
+            ACCESS_TOKEN_SECRET=
+            ${{ secrets.ACCESS_TOKEN_SECRET }}
+            REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
+            ENVFILE
+
+
+            # Restart the app with PM2
+            pm2 restart stock-image-api || pm2 start app.js --name stock-image-api
+
+          ENDSSH
+
+          rm key.pem
