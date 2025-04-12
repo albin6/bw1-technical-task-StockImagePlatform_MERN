@@ -8,7 +8,11 @@ import { AppError } from "../utils/app-error";
 export const userDetails = async (req: Request, res: Response) => {
   const userId = (req as CustomRequest).user.id;
 
-  const user = await UserModel.findById(userId);
+  const user = await UserModel.findById(userId, {
+    password: 0,
+    _id: 0,
+    refreshToken: 0,
+  });
 
   if (!user) {
     throw new AppError(Messages.USER_NOT_FOUND, StatusCode.NOT_FOUND);

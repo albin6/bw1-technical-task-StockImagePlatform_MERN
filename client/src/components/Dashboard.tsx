@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
-import { Layout, Modal, Form, Input, Button } from "antd";
-import { LockOutlined } from "@ant-design/icons";
+import { Layout, Modal, Form, Input, Button, Upload } from "antd";
+import { LockOutlined, PlusOutlined } from "@ant-design/icons";
 import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
 import { MainContent } from "../components/MainContent";
 import { imageService, ImageData } from "../api/image-service";
-import { logout, resetPassword, verifyCurrentPass } from "@/api/auth.service";
+import {
+  details,
+  logout,
+  resetPassword,
+  verifyCurrentPass,
+} from "@/api/auth.service";
 import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,10 +22,7 @@ interface UserData {
 
 export default function Dashboard() {
   // Mock user data - would come from API in real app
-  const [userData] = useState<UserData>({
-    email: "user@example.com",
-    phone: "+1234567890",
-  });
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   const navigate = useNavigate();
   // State for password reset modal
@@ -46,8 +48,12 @@ export default function Dashboard() {
     const fetchImages = async () => {
       try {
         setLoading(true);
-        const data = await imageService.getImages();
-        setImages(data);
+        const [images, user] = await Promise.all([
+          imageService.getImages(),
+          details(),
+        ]);
+        setImages(images);
+        setUserData(user.user);
       } catch (error) {
         // error handling
       } finally {
@@ -140,14 +146,27 @@ export default function Dashboard() {
 
     try {
       setLoading(true);
-      await imageService.updateImage(currentImage._id, values.title);
 
-      // Update image in state
-      const updatedImages = images.map((img) =>
-        img._id === currentImage._id ? { ...img, title: values.title } : img
-      );
+      const formData = new FormData();
+      formData.append("title", values.title);
 
+      // Check if a new image was uploaded
+      if (
+        values.newImage &&
+        values.newImage.fileList &&
+        values.newImage.fileList.length > 0
+      ) {
+        const file = values.newImage.fileList[0].originFileObj;
+        formData.append("image", file);
+      }
+
+      // Update imageService.updateImage to handle FormData
+      await imageService.updateImageWithFile(currentImage._id, formData);
+
+      // Refresh images from server to get updated URL
+      const updatedImages = await imageService.getImages();
       setImages(updatedImages);
+
       toast.success("Image updated successfully");
       setEditImageVisible(false);
       setCurrentImage(null);
@@ -160,6 +179,10 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
+  if (!userData) {
+    return;
+  }
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -319,8 +342,24 @@ export default function Dashboard() {
             >
               <Input placeholder="Enter image title" />
             </Form.Item>
+
+            {/* New field for image upload */}
+            <Form.Item name="newImage" label="Replace Image (Optional)">
+              <Upload
+                maxCount={1}
+                listType="picture-card"
+                beforeUpload={() => false} // Prevent auto upload
+                accept="image/*"
+              >
+                <div>
+                  <PlusOutlined />
+                  <div style={{ marginTop: 8 }}>Upload</div>
+                </div>
+              </Upload>
+            </Form.Item>
+
             <Form.Item>
-              <Button type="primary" htmlType="submit" block>
+              <Button type="primary" htmlType="submit" loading={loading} block>
                 Update Image
               </Button>
             </Form.Item>

@@ -211,9 +211,11 @@ export const resetPassword = async (req: Request, res: Response) => {
 
   const isPasswordMatch = await bcrypt.compare(newPassword, user.password);
 
-  if (!isPasswordMatch) {
+  if (isPasswordMatch) {
     throw new AppError(Messages.SET_DIFF_PASSWORD, StatusCode.BAD_REQUEST);
   }
+
+  console.log(isPasswordMatch);
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 

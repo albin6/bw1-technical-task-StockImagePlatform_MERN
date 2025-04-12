@@ -23,10 +23,15 @@ export const resetPassword = async (
   newPassword: string,
   confirmPassword: string
 ) => {
-  const response = await axiosInstance.post("/auth/reset-password", {
+  const response = await axiosInstance.patch("/auth/reset-password", {
     newPassword,
     confirmPassword,
   });
+  return response.data;
+};
+
+export const details = async () => {
+  const response = await axiosInstance.get("/auth/details");
   return response.data;
 };
 

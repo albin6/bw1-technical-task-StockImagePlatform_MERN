@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
-import { Form, Input, Button, Card, Typography, message } from "antd";
+import { Form, Input, Button, Card, Typography } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { login } from "@/api/auth.service";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 const { Title, Text } = Typography;
 
@@ -38,8 +39,9 @@ export default function LoginForm() {
       toast.success("Login successful!");
       navigate("/dashboard");
     } catch (error) {
-      toast.error("Login failed. Please try again.");
-      console.error("Login error:", error);
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data.message);
+      }
     } finally {
       setLoading(false);
     }

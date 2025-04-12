@@ -49,6 +49,18 @@ export const imageService = {
     return response.data;
   },
 
+  updateImageWithFile: async (
+    id: string,
+    formData: FormData
+  ): Promise<ImageData> => {
+    const response = await axiosInstance.put(`/img/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data.image;
+  },
+
   // Update image title
   updateImage: async (id: string, title: string): Promise<ImageData> => {
     const response = await axiosInstance.put(`/img/${id}`, { title });

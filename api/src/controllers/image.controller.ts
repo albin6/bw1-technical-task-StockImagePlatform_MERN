@@ -21,7 +21,8 @@ export const uploadImages = async (req: Request, res: Response) => {
   }
 
   // const titleArray: string[] = Array.isArray(titles) ? titles : [titles];
-  const titleArray: string[] = titles;
+  const titleArray = typeof titles === "string" ? JSON.parse(titles) : titles;
+  console.log(titleArray);
 
   const imagesToInsert: Partial<ImageDocument>[] = files.map((file, index) => ({
     title: titleArray[index],
