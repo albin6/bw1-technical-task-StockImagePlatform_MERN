@@ -49,7 +49,7 @@ jobs:
 
 
             # Restart the app with PM2
-            pm2 restart stock-image-api || pm2 start dist/app.js --name stock-image-api
+            pm2 restart stock-image-api || pm2 start dist/index.js --name stock-image-api
 
           ENDSSH
 
