@@ -21,9 +21,9 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > key.pem
           chmod 400 key.pem
 
-          ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USERNAME@$EC2_HOST << 'ENDSSH'
+          ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USERNAME@$EC2_HOST <<EOF
             # Navigate to project directory or clone if it doesn't exist
-            if [ -d "~/api" ]; then
+            if [ -d ~/api ]; then
               git pull origin main
             else
               git clone https://github.com/albin6/bw1-technical-task-StockImagePlatform_MERN.git ~/api
@@ -37,19 +37,18 @@ jobs:
             npm run build
 
             # Create/update .env file
-            cat > .env << 'ENVFILE'
-            PORT=${{ secrets.PORT }}
-            MONGO_URI=${{ secrets.MONGO_URI }}
-            CORS_ALLOWED_ORIGIN=${{ secrets.CORS_ALLOWED_ORIGIN }}
-            ACCESS_TOKEN_SECRET=
-            ${{ secrets.ACCESS_TOKEN_SECRET }}
-            REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
-            ENVFILE
+            cat <<EOT > .env
+            PORT=$PORT
+            MONGO_URI=$MONGO_URI
+            CORS_ALLOWED_ORIGIN=$CORS_ALLOWED_ORIGIN
+            ACCESS_TOKEN_SECRET=$ACCESS_TOKEN_SECRET
+            REFRESH_TOKEN_SECRET=$REFRESH_TOKEN_SECRET
+            EOT
 
 
             # Restart the app with PM2
             pm2 restart all || pm2 start dist/index.js
 
-          ENDSSH
+          EOF
 
           rm key.pem
