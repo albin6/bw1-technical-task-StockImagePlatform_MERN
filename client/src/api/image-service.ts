@@ -33,7 +33,7 @@ export const imageService = {
     console.log("Titles array:", titlesArray);
 
     // Add each file to the form data with a specific key for each file
-    files.forEach((file, index) => {
+    files.forEach((file) => {
       formData.append(`images`, file); // This should match your backend field name
     });
 
