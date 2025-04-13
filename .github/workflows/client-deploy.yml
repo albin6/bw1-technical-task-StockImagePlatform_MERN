@@ -19,10 +19,10 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Install dependencies
+      - name: Install dependencies with legacy peer deps
         run: |
           cd client
-          npm ci
+          npm ci --legacy-peer-deps
 
       - name: Build
         env:
