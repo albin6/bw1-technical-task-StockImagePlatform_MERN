@@ -24,7 +24,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USERNAME@$EC2_HOST << 'ENDSSH'
             # Navigate to project directory or clone if it doesn't exist
             if [ -d "~/api" ]; then
-              cd ~/api
               git pull origin main
             else
               git clone https://github.com/albin6/bw1-technical-task-StockImagePlatform_MERN.git ~/api
