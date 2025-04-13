@@ -59,6 +59,7 @@ jobs:
 
             # Build and run
             npm run build || echo "No build step defined, skipping"
+            pm2 flush
             pm2 restart all || pm2 start dist/index.js
 
           EOF
