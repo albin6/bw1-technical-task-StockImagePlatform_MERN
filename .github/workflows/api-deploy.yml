@@ -17,13 +17,22 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USERNAME: ${{ secrets.EC2_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          PORT: ${{ secrets.PORT }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          CORS_ALLOWED_ORIGIN: ${{ secrets.CORS_ALLOWED_ORIGIN }}
+          ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
+          REFRESH_TOKEN_SECRET: ${{ secrets.REFRESH_TOKEN_SECRET }}
+
         run: |
           echo "$SSH_PRIVATE_KEY" > key.pem
           chmod 400 key.pem
 
           ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USERNAME@$EC2_HOST <<EOF
-            # Navigate to project directory or clone if it doesn't exist
+            set -e  # stop on error
+
+            # Clone or pull repo
             if [ -d ~/api ]; then
+              cd ~/api
               git pull origin main
             else
               git clone https://github.com/albin6/bw1-technical-task-StockImagePlatform_MERN.git ~/api
@@ -32,12 +41,8 @@ jobs:
 
             cd api
 
-            # Install dependencies and build
-            npm ci
-            npm run build
-
-            # Create/update .env file
-            cat <<EOT > .env
+            # Create .env file
+            cat > .env <<EOT
             PORT=$PORT
             MONGO_URI=$MONGO_URI
             CORS_ALLOWED_ORIGIN=$CORS_ALLOWED_ORIGIN
@@ -45,8 +50,15 @@ jobs:
             REFRESH_TOKEN_SECRET=$REFRESH_TOKEN_SECRET
             EOT
 
+            # Install dependencies (use npm install if no package-lock.json)
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              npm install
+            fi
 
-            # Restart the app with PM2
+            # Build and run
+            npm run build || echo "No build step defined, skipping"
             pm2 restart all || pm2 start dist/index.js
 
           EOF
